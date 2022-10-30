@@ -30,15 +30,13 @@ def update_name_fields(cols, name_data, ind, data):
 
 
 def update_lastname(name, ind, data):
-    name_data = name.split()
     cols = ['lastname', 'firstname', 'surname']
-    update_name_fields(cols, name_data, ind, data)
+    update_name_fields(cols, name.split(), ind, data)
 
 
 def update_firstname(name, ind, data):
-    name_data = name.split()
     cols = ['firstname', 'surname']
-    update_name_fields(cols, name_data, ind, data)
+    update_name_fields(cols, name.split(), ind, data)
 
 
 def update_column(df, column):
