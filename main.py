@@ -7,7 +7,8 @@ df = pd.read_csv('phonebook_raw.csv')
 
 def update_phone(phone, ind, df):
     phone = str(phone)
-    pattern = re.compile('(\+7|8)?\s*\(?(\d{3})\)?[-\s]?(\d{3})[-\s]?(\d{2})[-\s]?(\d{2})\s*\(?(доб.)?\s*(\d{4})?\)?')
+    pattern = re.compile(
+        '(\+7|8)?\s*\(?(\d{3})\)?[-\s]?(\d{3})[-\s]?(\d{2})[-\s]?(\d{2})\s*\(?(доб.)?\s*(\d{4})?\)?')
     match = pattern.match(phone)
     substitution = r'8(\2)\3-\4-\5'
     if match:
@@ -16,39 +17,29 @@ def update_phone(phone, ind, df):
     df.loc[ind, 'phone'] = pattern.sub(substitution, phone)
 
 
-def update_lastname(name, ind, data):
-    name_data = name.split()
-
-    if len(name_data) == 2:
-        lastname, firstname = name_data
-        set_new_values(
-            ind, data,
-            lastname=lastname,
-            firstname=firstname
-        )
-
-    if len(name_data) == 3:
-        lastname, firstname, surname = name_data
-        set_new_values(
-            ind, data,
-            lastname=lastname,
-            firstname=firstname,
-            surname=surname
-        )
-
-def update_firstname(name, ind, data):
-    name_data = name.split()
-    if len(name_data) == 2:
-        firstname, surname = name_data
-        set_new_values(
-            ind, data,
-            firstname=firstname,
-            surname=surname
-        )
-
 def set_new_values(ind, data, **kwargs):
     for k, v in kwargs.items():
         data.loc[ind, k] = v
+
+
+def update_name_fields(cols, name_data, ind, data):
+    kw = {cols[i]: name_data[i]
+          for i in range(len(list(zip(name_data, cols))))}
+    if len(kw) > 1:
+        set_new_values(ind, data, **kw)
+
+
+def update_lastname(name, ind, data):
+    name_data = name.split()
+    cols = ['lastname', 'firstname', 'surname']
+    update_name_fields(cols, name_data, ind, data)
+
+
+def update_firstname(name, ind, data):
+    name_data = name.split()
+    cols = ['firstname', 'surname']
+    update_name_fields(cols, name_data, ind, data)
+
 
 def update_column(df, column):
     for ind, val in df[[column]].itertuples():
@@ -59,10 +50,11 @@ def update_column(df, column):
         }[column](val, ind, df)
     return df
 
+
 def merge_duplicates(df):
     for row in df.itertuples():
         df_rem = df.loc[row.Index+1:]
-        dublicate = (df_rem.loc[(df_rem['lastname'] == row.lastname) 
+        dublicate = (df_rem.loc[(df_rem['lastname'] == row.lastname)
                      & (df_rem['firstname'] == row.firstname)])
         if not dublicate.empty:
             for row_d in dublicate.itertuples():
