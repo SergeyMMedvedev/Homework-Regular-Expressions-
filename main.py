@@ -11,7 +11,7 @@ def update_phone(phone):
     pattern = re.compile(
         '(\+7|8)?\s*\(?(\d{3})\)?[-\s]?(\d{3})[-\s]?(\d{2})[-\s]?(\d{2})\s*\(?(доб.)?\s*(\d{4})?\)?')
     match = pattern.match(phone)
-    substitution = r'8(\2)\3-\4-\5'
+    substitution = r'+7(\2)\3-\4-\5'
     if match:
         if match.group(6):
             substitution += r' \6\7'
