@@ -2,7 +2,7 @@ import re
 import pandas as pd
 
 
-df = pd.read_csv('phonebook_raw.csv')
+df = pd.read_csv('phonebook_raw.csv', usecols=list(range(7)))
 duplicates = {}
 
 
