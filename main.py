@@ -3,6 +3,7 @@ import pandas as pd
 
 
 df = pd.read_csv('phonebook_raw.csv')
+duplicates = {}
 
 
 def update_phone(phone):
@@ -17,24 +18,21 @@ def update_phone(phone):
     return pattern.sub(substitution, phone)
 
 
-def merge_duplicates(df):
-    for row in df.itertuples():
-        df_rem = df.loc[row.Index+1:]
-        dublicate = (df_rem.loc[(df_rem['lastname'] == row.lastname)
-                     & (df_rem['firstname'] == row.firstname)])
-        if not dublicate.empty:
-            for row_d in dublicate.itertuples():
-                for v1, v2, col in zip(row[1:], row_d[1:], list(df.columns)):
-                    df.loc[row.Index, col] = v1 if str(v1) != 'nan' else v2
-                df = df.drop(index=[row_d.Index])
-    return df
-
-
 def get_full_name_list(*args):
     full_name = []
     for arg in args:
         full_name += str(arg).split()
     return full_name[:3]
+
+
+def merge_rows(df, ind1, ind2):
+    row = df.loc[ind1].values
+    dupl_row = df.loc[ind2].values
+    res = []
+    for v1, v2 in zip(list(row), list(dupl_row)):
+        res.append(v1 if str(v1) != 'nan' else v2)
+    df.loc[ind1] = res
+    df.drop(index=[ind2], inplace=True)
 
 
 def update_columns(df):
@@ -45,11 +43,15 @@ def update_columns(df):
         df.loc[row.Index, 'firstname'] = firstname
         df.loc[row.Index, 'surname'] = surname
         df.loc[row.Index, 'phone'] = update_phone(row.phone)
+        duplicate_ind = duplicates.get((lastname, firstname))
+        if duplicate_ind:
+            merge_rows(df, duplicate_ind, row.Index)
+        else:
+            duplicates[(lastname, firstname)] = row.Index
     return df
 
 
-df = (df.pipe(update_columns)
-        .pipe(merge_duplicates))
+df = (df.pipe(update_columns))
 
 print(df)
 df.to_csv('phonebook.csv')
