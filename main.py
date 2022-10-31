@@ -5,7 +5,7 @@ import pandas as pd
 df = pd.read_csv('phonebook_raw.csv')
 
 
-def update_phone(phone, ind, df):
+def update_phone(phone):
     phone = str(phone)
     pattern = re.compile(
         '(\+7|8)?\s*\(?(\d{3})\)?[-\s]?(\d{3})[-\s]?(\d{2})[-\s]?(\d{2})\s*\(?(доб.)?\s*(\d{4})?\)?')
@@ -14,39 +14,7 @@ def update_phone(phone, ind, df):
     if match:
         if match.group(6):
             substitution += r' \6\7'
-    df.loc[ind, 'phone'] = pattern.sub(substitution, phone)
-
-
-def set_new_values(ind, data, **kwargs):
-    for k, v in kwargs.items():
-        data.loc[ind, k] = v
-
-
-def update_name_fields(cols, name_data, ind, data):
-    kw = {cols[i]: name_data[i]
-          for i in range(len(list(zip(name_data, cols))))}
-    if len(kw) > 1:
-        set_new_values(ind, data, **kw)
-
-
-def update_lastname(name, ind, data):
-    cols = ['lastname', 'firstname', 'surname']
-    update_name_fields(cols, name.split(), ind, data)
-
-
-def update_firstname(name, ind, data):
-    cols = ['firstname', 'surname']
-    update_name_fields(cols, name.split(), ind, data)
-
-
-def update_column(df, column):
-    for ind, val in df[[column]].itertuples():
-        {
-            'phone': update_phone,
-            'lastname': update_lastname,
-            'firstname': update_firstname
-        }[column](val, ind, df)
-    return df
+    return pattern.sub(substitution, phone)
 
 
 def merge_duplicates(df):
@@ -62,9 +30,25 @@ def merge_duplicates(df):
     return df
 
 
-df = (df.pipe(update_column, 'phone')
-        .pipe(update_column, 'lastname')
-        .pipe(update_column, 'firstname')
+def get_full_name_list(*args):
+    full_name = []
+    for arg in args:
+        full_name += str(arg).split()
+    return full_name[:3]
+
+
+def update_columns(df):
+    for row in df.itertuples():
+        lastname, firstname, surname = get_full_name_list(
+            row.lastname, row.firstname, row.surname)
+        df.loc[row.Index, 'lastname'] = lastname
+        df.loc[row.Index, 'firstname'] = firstname
+        df.loc[row.Index, 'surname'] = surname
+        df.loc[row.Index, 'phone'] = update_phone(row.phone)
+    return df
+
+
+df = (df.pipe(update_columns)
         .pipe(merge_duplicates))
 
 print(df)
